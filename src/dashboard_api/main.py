@@ -1,21 +1,26 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import os
 
-from services.sheets_services import get_all_complaints, get_latest_complaint
+from services.supabase_services import (
+    get_all_complaints,
+    get_latest_complaint,
+    get_complaints_by_severity,
+)
 
 # ------------------ PATH SETUP ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-EVIDENCE_DIR = os.path.join(BASE_DIR, "..", "..", "evidence")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+EVIDENCE_BUCKET_URL = f"{SUPABASE_URL}/storage/v1/object/public/evidence"
 
 # ------------------ APP ------------------
 app = FastAPI(
     title="CleanCam AI Dashboard API",
     description="API for monitoring automated garbage complaints",
-    version="1.0"
+    version="2.0"
 )
 
 # ------------------ STATIC FILES ------------------
@@ -33,7 +38,7 @@ templates = Jinja2Templates(
 # ------------------ ROUTES ------------------
 @app.get("/")
 def health_check():
-    return {"status": "CleanCam AI Dashboard API running"}
+    return {"status": "CleanCam AI Dashboard API running", "version": "2.0", "database": "Supabase"}
 
 @app.get("/dashboard")
 def dashboard(request: Request):
@@ -51,14 +56,13 @@ def list_complaints():
 def latest_complaint():
     return get_latest_complaint()
 
+@app.get("/complaints/severity/{level}")
+def complaints_by_severity(level: str):
+    return get_complaints_by_severity(level)
+
 @app.get("/evidence/{image_name}")
 def get_evidence_image(image_name: str):
+    """Redirect to the Supabase Storage public URL for the evidence image."""
     if not image_name.lower().endswith(".jpg"):
         image_name += ".jpg"
-
-    image_path = os.path.join(EVIDENCE_DIR, image_name)
-
-    if not os.path.exists(image_path):
-        return {"error": "Image not found"}
-
-    return FileResponse(image_path)
+    return RedirectResponse(url=f"{EVIDENCE_BUCKET_URL}/{image_name}")

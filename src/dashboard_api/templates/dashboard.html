@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CleanCam AI Dashboard</title>
-    <link rel="stylesheet" href="\static\CSS\dashboard.css">
+    <meta name="description" content="AI-Powered Garbage Detection & Monitoring Dashboard — Real-time waste detection analytics">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Hero Section -->
@@ -15,26 +17,47 @@
                 <p class="hero-subtitle">AI-Powered Garbage Detection & Monitoring System</p>
                 <p class="hero-description">Real-time waste detection using computer vision to create cleaner, smarter cities</p>
                 
-                <!-- Social Links -->
-                <div class="social-links">
-                    <a href="https://github.com/rajmachawal-py" class="social-btn github" target="_blank" rel="noopener">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                <!-- Controls Row -->
+                <div class="hero-controls">
+                    <!-- Social Links -->
+                    <div class="social-links">
+                        <a href="https://github.com/rajmachawal-py" class="social-btn github" target="_blank" rel="noopener">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                            GitHub
+                        </a>
+                        <a href="https://www.linkedin.com/in/lakshay-vig/" class="social-btn linkedin" target="_blank" rel="noopener">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                            LinkedIn
+                        </a>
+                        <a href="https://x.com/papperocks0" class="social-btn twitter" target="_blank" rel="noopener">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                            X (Twitter)
+                        </a>
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle dark/light mode">
+                        <svg id="theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                         </svg>
-                        GitHub
-                    </a>
-                    <a href="https://www.linkedin.com/in/lakshay-vig/" class="social-btn linkedin" target="_blank" rel="noopener">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        <svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
-                        LinkedIn
-                    </a>
-                    <a href="https://x.com/papperocks0" class="social-btn twitter" target="_blank" rel="noopener">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                        X (Twitter)
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -52,7 +75,7 @@
                 <div class="info-card">
                     <div class="info-card-icon">🤖</div>
                     <h3>Technology</h3>
-                    <p>Computer Vision, Deep Learning, YOLO object detection, Flask backend</p>
+                    <p>Computer Vision, Deep Learning, YOLO object detection, FastAPI backend, Supabase</p>
                 </div>
                 <div class="info-card">
                     <div class="info-card-icon">📊</div>
@@ -68,13 +91,13 @@
         <div class="container-full">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value">{{ complaints|length if complaints else 0 }}</div>
+                    <div class="stat-value" id="stat-total">{{ complaints|length if complaints else 0 }}</div>
                     <div class="stat-label">Total Detections</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">
+                    <div class="stat-value" id="stat-avg">
                         {% if complaints and complaints|length > 0 %}
-                            {{ "%.1f"|format((complaints|map(attribute='Garbage %')|map('replace', '%', '')|map('float')|sum) / (complaints|length)) }}%
+                            {{ "%.1f"|format((complaints|map(attribute='garbage_pct')|sum) / (complaints|length)) }}%
                         {% else %}
                             0%
                         {% endif %}
@@ -85,15 +108,49 @@
                     <div class="stat-value">24/7</div>
                     <div class="stat-label">Active Monitoring</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="auto-refresh-indicator">
+                        <span class="live-dot"></span> Live
+                    </div>
+                    <div class="stat-label">Auto-Refresh (30s)</div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Dashboard Header -->
+    <!-- Chart Section -->
+    <section class="chart-section">
+        <div class="container-full">
+            <h2 class="section-title">Detection Trends</h2>
+            <p class="section-subtitle">Garbage percentage over time</p>
+            <div class="chart-container">
+                <canvas id="detectionChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Header + Filter Bar -->
     <section class="dashboard-header">
         <div class="container-full">
             <h2 class="section-title">Detection Reports</h2>
             <p class="section-subtitle">All garbage detections captured by the system</p>
+
+            <!-- Severity Filters -->
+            <div class="filter-bar" id="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="Critical">
+                    <span class="filter-dot dot-critical"></span> Critical
+                </button>
+                <button class="filter-btn" data-filter="High">
+                    <span class="filter-dot dot-high"></span> High
+                </button>
+                <button class="filter-btn" data-filter="Medium">
+                    <span class="filter-dot dot-medium"></span> Medium
+                </button>
+                <button class="filter-btn" data-filter="Low">
+                    <span class="filter-dot dot-low"></span> Low
+                </button>
+            </div>
         </div>
     </section>
 
@@ -101,26 +158,28 @@
     <section class="reports-section">
         <div class="container-full">
             {% if complaints and complaints|length > 0 %}
-                <div class="grid">
+                <div class="grid" id="reports-grid">
                     {% for c in complaints %}
-                    <article class="card">
+                    <article class="card" data-severity="{{ c.get('severity', 'Low') }}">
                         <div class="card-header">
                             <div class="severity-badge">
-                                {% set garbage_pct = c.get("Garbage %", "0")|string|replace("%", "")|float %}
-                                {% if garbage_pct >= 70 %}
+                                {% set sev = c.get("severity", "Low") %}
+                                {% if sev == "Critical" %}
+                                    <span class="badge badge-critical">Critical</span>
+                                {% elif sev == "High" %}
                                     <span class="badge badge-high">High Priority</span>
-                                {% elif garbage_pct >= 40 %}
+                                {% elif sev == "Medium" %}
                                     <span class="badge badge-medium">Medium</span>
                                 {% else %}
                                     <span class="badge badge-low">Low</span>
                                 {% endif %}
                             </div>
-                            <span class="timestamp">{{ c.get("Timestamp", "N/A") }}</span>
+                            <span class="timestamp">{{ c.get("timestamp", "N/A") }}</span>
                         </div>
 
                         <div class="card-image">
-                            {% if c.get("Image Path") %}
-                                <img src="/evidence/{{ c.get('Image Path').split('/')[-1] }}" alt="Garbage Evidence" loading="lazy">
+                            {% if c.get("evidence_url") %}
+                                <img src="{{ c.get('evidence_url') }}" alt="Garbage Evidence" loading="lazy">
                                 <div class="image-overlay">
                                     <span class="view-text">Click to view</span>
                                 </div>
@@ -142,7 +201,7 @@
                                     <span class="icon">📍</span>
                                     <div class="info-content">
                                         <span class="info-label">Location</span>
-                                        <span class="info-value">{{ c.get("Location", "N/A") }}</span>
+                                        <span class="info-value">{{ c.get("location", "N/A") }}</span>
                                     </div>
                                 </div>
 
@@ -150,7 +209,7 @@
                                     <span class="icon">♻️</span>
                                     <div class="info-content">
                                         <span class="info-label">Garbage Detected</span>
-                                        <span class="info-value">{{ c.get("Garbage %", "N/A") }}</span>
+                                        <span class="info-value">{{ c.get("garbage_pct", 0) }}%</span>
                                     </div>
                                 </div>
 
@@ -158,7 +217,7 @@
                                     <span class="icon">⏱️</span>
                                     <div class="info-content">
                                         <span class="info-label">Duration</span>
-                                        <span class="info-value">{{ c.get("Duration (s)", "N/A") }}s</span>
+                                        <span class="info-value">{{ c.get("duration_seconds", "N/A") }}s</span>
                                     </div>
                                 </div>
                             </div>
@@ -199,5 +258,189 @@
             </div>
         </div>
     </footer>
+
+    <!-- Complaint data injected by Jinja2 (not parsed as JS) -->
+    <script id="complaints-data" type="application/json">{{ complaints | default([], true) | tojson | safe }}</script>
+
+    <script>
+        // =================== COMPLAINT DATA ===================
+        const complaints = JSON.parse(document.getElementById('complaints-data').textContent);
+        
+        // =================== CHART.JS ===================
+        function initChart() {
+            const ctx = document.getElementById('detectionChart');
+            if (!ctx || complaints.length === 0) return;
+
+            // Group by date and get average garbage_pct per day
+            const grouped = {};
+            complaints.forEach(c => {
+                const dateStr = c.timestamp ? c.timestamp.split('T')[0] : 'Unknown';
+                if (!grouped[dateStr]) grouped[dateStr] = [];
+                grouped[dateStr].push(c.garbage_pct || 0);
+            });
+
+            const labels = Object.keys(grouped).sort();
+            const avgData = labels.map(d => {
+                const vals = grouped[d];
+                return +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+            });
+            const countData = labels.map(d => grouped[d].length);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Avg Garbage %',
+                            data: avgData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.3)',
+                            borderColor: '#22C55E',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            yAxisID: 'y',
+                        },
+                        {
+                            label: 'Detections',
+                            data: countData,
+                            type: 'line',
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#3B82F6',
+                            pointRadius: 5,
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94A3B8', font: { size: 13 } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94A3B8', maxRotation: 45 },
+                            grid: { color: 'rgba(51, 65, 85, 0.5)' }
+                        },
+                        y: {
+                            position: 'left',
+                            title: { display: true, text: 'Garbage %', color: '#22C55E' },
+                            ticks: { color: '#22C55E' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                            min: 0, max: 100
+                        },
+                        y1: {
+                            position: 'right',
+                            title: { display: true, text: 'Count', color: '#3B82F6' },
+                            ticks: { color: '#3B82F6', stepSize: 1 },
+                            grid: { display: false },
+                            min: 0
+                        }
+                    }
+                }
+            });
+        }
+
+        // =================== SEVERITY FILTERS ===================
+        function initFilters() {
+            const filterBar = document.getElementById('filter-bar');
+            if (!filterBar) return;
+
+            filterBar.addEventListener('click', (e) => {
+                const btn = e.target.closest('.filter-btn');
+                if (!btn) return;
+
+                // Toggle active class
+                filterBar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+                const cards = document.querySelectorAll('.card[data-severity]');
+
+                cards.forEach(card => {
+                    if (filter === 'all' || card.dataset.severity === filter) {
+                        card.style.display = '';
+                        card.style.animation = 'slideInUp 0.4s ease-out';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // =================== DARK/LIGHT MODE ===================
+        function initThemeToggle() {
+            const toggle = document.getElementById('theme-toggle');
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            const savedTheme = localStorage.getItem('cleancam-theme') || 'dark';
+
+            function applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+                localStorage.setItem('cleancam-theme', theme);
+                if (theme === 'light') {
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                } else {
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                }
+                // Show correct icon: sun in dark mode (click to go light), moon in light mode (click to go dark)
+                if (theme === 'dark') {
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                } else {
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                }
+            }
+
+            applyTheme(savedTheme);
+
+            toggle.addEventListener('click', () => {
+                const current = document.body.getAttribute('data-theme') || 'dark';
+                applyTheme(current === 'dark' ? 'light' : 'dark');
+            });
+        }
+
+        // =================== AUTO REFRESH ===================
+        function initAutoRefresh() {
+            const REFRESH_INTERVAL = 30000; // 30 seconds
+
+            setInterval(async () => {
+                try {
+                    const res = await fetch('/complaints/latest');
+                    const latest = await res.json();
+                    if (latest && latest.id) {
+                        // Check if we have a new complaint
+                        const currentTotal = document.querySelectorAll('.card[data-severity]').length;
+                        const totalRes = await fetch('/complaints');
+                        const allComplaints = await totalRes.json();
+                        if (allComplaints.length > currentTotal) {
+                            // New detection — reload the page
+                            location.reload();
+                        }
+                    }
+                } catch (err) {
+                    console.log('Auto-refresh check failed:', err);
+                }
+            }, REFRESH_INTERVAL);
+        }
+
+        // =================== INIT ===================
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            initFilters();
+            initThemeToggle();
+            initAutoRefresh();
+        });
+    </script>
 </body>
 </html>

@@ -3,22 +3,27 @@ venv/
 
 # Data & Models
 Garbage_dataset/
+Garbage_dataset.zip
 model/
 runs/
+src/runs/
 evidence/
+*.pt
 
 # n8n workflow folder
 CleanCam n8n/
+src/CleanCam n8n/
 
 # Python cache
 __pycache__/
 *.pyc
 
 # Secrets
-service_account.json
 .env
+service_account.json
 
-# Notebook cache
+# Notebook
+src/main.ipynb
 .ipynb_checkpoints/
 
 # IDE
@@ -29,9 +34,6 @@ service_account.json
 .DS_Store
 Thumbs.db
 
-# ignored .env
-.env
-
-# Ignore Notebook
-src/main.ipynb
-
+# Merge artifacts
+*.resolved
+walkthrough.md

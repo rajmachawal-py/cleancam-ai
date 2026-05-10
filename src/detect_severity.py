@@ -3,15 +3,27 @@ from ultralytics import YOLO
 import time
 import requests
 import os
+import sys
 from dotenv import load_dotenv
 
-load_dotenv()
+# Add src/ to path for shared modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from supabase_client import supabase
+from dashboard_api.models.complaint import ComplaintPayload, ComplaintRecord
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
 
 # ---------------- CONFIG ----------------
 MODEL_PATH = os.getenv("MODEL_PATH")
 CONF_THRESHOLD = float(os.getenv("CONF_THRESHOLD", 0.3))
+print(f"[CONFIG] CONF_THRESHOLD = {CONF_THRESHOLD}")
 MIN_BOX_AREA = int(os.getenv("MIN_BOX_AREA", 500))
 N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
+LOCATION = os.getenv("LOCATION", "Unknown Location")
+
+# Project root (one level up from src/)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # ---------- TIME-BASED ACCUMULATION VARIABLES ----------
@@ -77,6 +89,42 @@ def send_to_n8n(payload):
         print(f"Error sending complaint: {e}")
 
 
+#---------------Upload Evidence to Supabase Storage---------------
+def upload_evidence_to_supabase(frame, filename: str) -> str:
+    """Encode frame as JPEG in-memory and upload directly to Supabase Storage."""
+    try:
+        _, buffer = cv2.imencode(".jpg", frame)
+        image_bytes = buffer.tobytes()
+
+        supabase.storage.from_("evidence").upload(
+            path=filename,
+            file=image_bytes,
+            file_options={"content-type": "image/jpeg"}
+        )
+
+        public_url = supabase.storage.from_("evidence").get_public_url(filename)
+        print(f"☁️ Evidence uploaded to Supabase: {public_url}")
+        return public_url
+    except Exception as e:
+        print(f"❌ Supabase upload error: {e}")
+        return ""
+
+
+#---------------Insert Complaint into Supabase DB---------------
+def save_complaint_to_supabase(payload_dict: dict, evidence_url: str):
+    """Validate payload and insert a complaint record into Supabase."""
+    try:
+        payload = ComplaintPayload(**payload_dict)
+        record = ComplaintRecord.from_payload(payload, evidence_url=evidence_url)
+
+        row = record.model_dump(exclude={"id", "timestamp"})
+
+        result = supabase.table("complaints").insert(row).execute()
+        print(f"✅ Complaint saved to Supabase DB: {result.data}")
+    except Exception as e:
+        print(f"❌ Supabase DB insert error: {e}")
+
+
 # ---------------- MAIN LOOP ----------------
 while True:
     ret, frame = cap.read()
@@ -98,7 +146,8 @@ while True:
         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
         box_area = (x2 - x1) * (y2 - y1)
 
-        print("Box area:", box_area)
+        confidence = float(box.conf[0].cpu())
+        print(f"Box area: {box_area}  conf: {confidence:.2f}")
 
         # DRAW BOX (ALWAYS)
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -171,15 +220,13 @@ while True:
     #----------------Evidence Capture----------------
     if (garbage_percentage >= GARBAGE_PERCENT_THRESHOLD and first_detected_time is not None and (current_time - first_detected_time) >= PERSISTENCE_TIME and not complaint_triggered):
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        filename = f"evidence/garbage_{timestamp}.jpg"
-
-        cv2.imwrite(filename, frame)
+        filename = f"garbage_{timestamp}.jpg"
 
         elapsed_time = current_time - first_detected_time
-        print(f"[{timestamp}] 📸 Evidence saved: {filename}")
+        print(f"[{timestamp}] 📸 Evidence captured (uploading to cloud...)")
 
         complaint_text, payload = garbage_complaint_format(  
-            location="123 Main St, Anytown",
+            location=LOCATION,
             timestamp=timestamp,
             garbage_percentage=garbage_percentage,
             elapsed_time=elapsed_time,
@@ -189,6 +236,10 @@ while True:
         print(complaint_text)
 
         send_to_n8n(payload)
+
+        # -------- SUPABASE: Upload evidence + save complaint --------
+        evidence_url = upload_evidence_to_supabase(frame, filename)
+        save_complaint_to_supabase(payload, evidence_url)
 
         complaint_triggered = True
 
