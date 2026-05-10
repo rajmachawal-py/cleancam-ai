@@ -1,223 +1,248 @@
-# ♻️ CleanCam AI
+<div align="center">
 
-### Smart Cleanliness Monitoring using Computer Vision
+<!-- Animated Header -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C853,100:00E676&height=220&section=header&text=CleanCam%20AI&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Smart%20Cleanliness%20Monitoring%20using%20Computer%20Vision&descSize=18&descAlignY=55" width="100%"/>
 
-> AI-powered garbage detection, severity scoring, and automated civic complaint workflow.
+<!-- Animated Badges -->
+<p>
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/YOLOv8s-Ultralytics-00FFFF?style=for-the-badge&logo=yolo&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
+</p>
 
----
+<p>
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
+  <img src="https://img.shields.io/github/stars/rajmachawal-py/cleancam-ai?style=flat-square&color=yellow" />
+  <img src="https://img.shields.io/github/forks/rajmachawal-py/cleancam-ai?style=flat-square&color=blue" />
+  <img src="https://img.shields.io/github/last-commit/rajmachawal-py/cleancam-ai?style=flat-square&color=red" />
+</p>
 
-## 🚀 Overview
+> *AI-powered garbage detection, severity scoring, and automated civic complaint workflow.*
 
-CleanCam AI is a **Smart City AI project** that detects garbage accumulation from images or CCTV feeds and automatically triggers complaint workflows, sends email alerts, and logs data into Google Sheets for monitoring and analytics.
-
-This project demonstrates how **AI + Automation + CivicTech** can help cities maintain cleanliness without relying on manual reporting.
-
----
-
-## 🌍 Problem Statement
-
-Urban areas frequently suffer from garbage overflow because reporting is manual and inconsistent. Citizens often:
-
-* Ignore waste accumulation
-* Don’t know where to report
-* Avoid the effort of filing complaints
-
-This leads to:
-
-* Health hazards
-* Poor sanitation
-* Environmental pollution
-
-**CleanCam AI automates the entire reporting pipeline.**
+</div>
 
 ---
 
-## 💡 Solution
+## 🌍 The Problem
 
-CleanCam AI combines **Computer Vision + Automation** to automatically:
+Urban areas frequently suffer from **garbage overflow** because reporting is manual and inconsistent.
 
-1. Detect garbage from images or cameras
-2. Predict severity of garbage accumulation
-3. Trigger complaint workflow when severity is high
-4. Send evidence via email
-5. Store records in Google Sheets
-6. Display data on a dashboard
+<table>
+<tr>
+<td>😶 Citizens ignore waste</td>
+<td>🤷 Don't know where to report</td>
+<td>😮‍💨 Filing complaints is tedious</td>
+</tr>
+</table>
 
-Supported inputs:
+This leads to **health hazards**, **poor sanitation**, and **environmental pollution**.
 
-* CCTV cameras
-* Mobile images
-* Drone footage
+**CleanCam AI automates the entire reporting pipeline — from detection to complaint.**
+
+---
+
+## 💡 How It Works
+
+```mermaid
+graph LR
+    A[📷 CCTV / Webcam] --> B[🧠 YOLOv8s Detection]
+    B --> C{🗑️ Garbage ≥ 20%<br/>for 5+ minutes?}
+    C -- Yes --> D[📸 Capture Evidence]
+    D --> E[☁️ Upload to Supabase Storage]
+    E --> F[📧 n8n Webhook Alert]
+    E --> G[📝 Supabase DB Insert]
+    G --> H[🖥️ Live Dashboard]
+    C -- No --> I[⏳ Keep Monitoring]
+```
 
 ---
 
 ## 🧠 Key Features
 
-### 🗑️ Garbage Detection
-
-YOLO-based detection model identifies garbage in images.
-
-### 📊 Severity Classification
-
-Garbage is categorized into:
-
-* Low
-* Medium
-* High
-* Critical
-
-### 📧 Automated Complaint Filing
-
-When severity reaches **High/Critical**:
-
-* Complaint message generated
-* Image evidence attached
-* Email sent automatically
-* Data stored in Google Sheets
-
-### 📊 Dashboard Monitoring
-
-Tracks complaint history and analytics.
+<table>
+<tr>
+<td align="center" width="25%">
+  <h3>🗑️</h3>
+  <b>Garbage Detection</b><br/>
+  YOLOv8s model trained on 4730+ images with GPU acceleration
+</td>
+<td align="center" width="25%">
+  <h3>📊</h3>
+  <b>Severity Classification</b><br/>
+  Auto-categorized: Low · Medium · High · Critical
+</td>
+<td align="center" width="25%">
+  <h3>☁️</h3>
+  <b>Cloud Evidence</b><br/>
+  In-memory JPEG upload directly to Supabase Storage
+</td>
+<td align="center" width="25%">
+  <h3>📧</h3>
+  <b>Auto Complaints</b><br/>
+  Webhook alerts + email via n8n automation
+</td>
+</tr>
+</table>
 
 ---
 
-## 🏗️ System Architecture
+## 📊 Model Performance
 
-```
-User Image / CCTV Feed
-        ↓
-Garbage Detection Model (YOLO)
-        ↓
-Severity Prediction Model
-        ↓
-Decision Engine
-        ↓
-Automation Workflow (n8n / Webhooks)
-        ↓
-Email + Google Sheets Logging
-        ↓
-Dashboard Tracking
-```
+Trained on **RTX 4050 GPU** · **YOLOv8s** · **50 epochs** · **4730 images**
+
+<table>
+<tr>
+<th>Metric</th>
+<th>v1 (Nano, 10 epochs)</th>
+<th>v2 (Small, 50 epochs)</th>
+<th>Δ</th>
+</tr>
+<tr><td><b>Precision</b></td><td>0.679</td><td><b>0.731</b></td><td>✅ +7.7%</td></tr>
+<tr><td><b>Recall</b></td><td>0.477</td><td><b>0.578</b></td><td>✅ +21.2%</td></tr>
+<tr><td><b>mAP@50</b></td><td>0.547</td><td><b>0.650</b></td><td>✅ +18.8%</td></tr>
+<tr><td><b>mAP@50-95</b></td><td>0.295</td><td><b>0.361</b></td><td>✅ +22.4%</td></tr>
+<tr><td><b>Inference</b></td><td>49.4ms (CPU)</td><td><b>3.9ms (GPU)</b></td><td>⚡ 12.7x faster</td></tr>
+</table>
+
+---
+
+## ⚙️ Tech Stack
+
+<table>
+<tr>
+<td align="center"><img src="https://skillicons.dev/icons?i=python" width="40"/><br/><b>Python</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=fastapi" width="40"/><br/><b>FastAPI</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=supabase" width="40"/><br/><b>Supabase</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=postgres" width="40"/><br/><b>PostgreSQL</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=docker" width="40"/><br/><b>Docker</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=pytorch" width="40"/><br/><b>PyTorch</b></td>
+</tr>
+</table>
+
+| Layer | Technologies |
+|-------|-------------|
+| **Detection** | YOLOv8s · OpenCV · PyTorch (CUDA) |
+| **Backend** | FastAPI · Uvicorn · Pydantic |
+| **Database** | Supabase (PostgreSQL + Storage) |
+| **Automation** | n8n · Webhooks · Gmail |
+| **Frontend** | Jinja2 · Chart.js · Dark Mode UI |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-src/
- ┣ dashboard_api/
- ┃ ┣ services/
- ┃ ┃ ┗ sheets_services.py
- ┃ ┣ static/css/
- ┃ ┣ templates/
- ┃ ┃ ┗ dashboard.html
- ┃ ┗ main.py
- ┣ detect_severity.py
- ┗ requirements.txt
+CleanCam AI/
+├── src/
+│   ├── detect_severity.py      # Main detection engine
+│   ├── retrain.py              # GPU training script (YOLOv8s)
+│   ├── supabase_client.py      # Shared Supabase connection
+│   └── dashboard_api/
+│       ├── main.py             # FastAPI app
+│       ├── models/
+│       │   └── complaint.py    # Pydantic data models
+│       ├── services/
+│       │   └── supabase_services.py
+│       ├── templates/
+│       │   └── dashboard.html  # Dashboard UI
+│       └── static/css/
+│           └── dashboard.css   # Dark theme styles
+├── Garbage_dataset/            # Roboflow training data
+├── model/
+│   └── train_v2/weights/
+│       └── best.pt             # Trained YOLOv8s weights
+├── .env                        # Configuration
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## ⚙️ Tech Stack
+## 🚀 Quick Start
 
-### 👨‍💻 Backend
-
-* Python
-* FastAPI / Flask
-
-### 🤖 Machine Learning
-
-* YOLO Object Detection
-* OpenCV
-* NumPy
-* Pandas
-
-### 🔗 Automation & Cloud
-
-* Webhooks
-* n8n + Docker
-* Google Cloud APIs
-* Gmail Automation
-* Google Sheets API
-
-### 🗄️ Database (Planned)
-
-* MongoDB
-
----
-
-## 🔄 Workflow
-
-1. Upload image / capture frame
-2. Detect garbage using YOLO
-3. Predict garbage severity
-4. If severity ≥ threshold → trigger complaint
-5. Send email with image evidence
-6. Store data in Google Sheets
-7. Update dashboard
-
----
-
-## 🧪 How to Run Locally
-
-### 1️⃣ Clone the Repository
+### 1️⃣ Clone & Setup
 
 ```bash
-git clone https://github.com/rajmachawal-py/CleanCam-AI.git
-cd CleanCam-AI
-```
-
-### 2️⃣ Install Dependencies
-
-```bash
+git clone https://github.com/rajmachawal-py/cleancam-ai.git
+cd cleancam-ai
+python -m venv venv
+.\venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-### 3️⃣ Run the Dashboard API
+### 2️⃣ Configure `.env`
+
+```env
+MODEL_PATH = "path/to/model/train_v2/weights/best.pt"
+CONF_THRESHOLD = 0.75
+MIN_BOX_AREA = 500
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_KEY = "your-supabase-anon-key"
+N8N_WEBHOOK_URL = "your-n8n-webhook"
+LOCATION = "Your Camera Location"
+```
+
+### 3️⃣ Run Detection
+
+```bash
+cd src
+python detect_severity.py
+```
+
+### 4️⃣ Run Dashboard
 
 ```bash
 cd src/dashboard_api
-python main.py
+uvicorn main:app --reload
 ```
+
+Open **http://127.0.0.1:8000/dashboard** 🖥️
 
 ---
 
 ## 🎯 Use Cases
 
-* Smart Cities
-* Municipal Corporations
-* Housing Societies
-* College Campuses
-* Industrial Areas
+<table>
+<tr>
+<td align="center">🏙️<br/><b>Smart Cities</b></td>
+<td align="center">🏢<br/><b>Municipal Corps</b></td>
+<td align="center">🏘️<br/><b>Housing Societies</b></td>
+<td align="center">🎓<br/><b>College Campuses</b></td>
+<td align="center">🏭<br/><b>Industrial Areas</b></td>
+</tr>
+</table>
 
 ---
 
-## 🌟 Why This Project Matters
+## 🔮 Roadmap
 
-* Encourages cleaner cities
-* Reduces manual effort
-* Speeds up civic response
-* Demonstrates AI for social good
-
----
-
-## 🔮 Future Improvements
-
-* Live CCTV real‑time monitoring
-* Mobile app for citizens
-* Garbage hotspot heatmaps
-* Multilingual complaint generation
-* Real-time analytics dashboard
+- [x] YOLOv8 garbage detection
+- [x] Severity classification engine
+- [x] n8n webhook automation
+- [x] Supabase cloud migration
+- [x] Model retrain (YOLOv8s, 50 epochs, GPU)
+- [x] Cloud-only evidence upload
+- [x] Dashboard with Chart.js analytics
+- [ ] Live real-time dashboard (WebSocket)
+- [ ] PWA + Push notifications
+- [ ] Multi-camera support
+- [ ] Negative sample training (reduce false positives)
 
 ---
 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
+Feel free to open a [pull request](https://github.com/rajmachawal-py/cleancam-ai/pulls).
 
 ---
 
-## ⭐ Support
+<div align="center">
 
-If you like this project, give it a ⭐ on GitHub!
+**If you found this useful, give it a ⭐**
 
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C853,100:00E676&height=120&section=footer" width="100%"/>
+
+</div>
