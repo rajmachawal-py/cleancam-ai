@@ -36,9 +36,49 @@ first_detected_time = None         # stores first detection time
 complaint_triggered = False        # prevents repeated triggers
 threshold_buffer = 5.0             # buffer to avoid rapid toggling
 
-# ---------- LOCATION SYNC CONFIG ----------
-last_location_check = 0.0
-LOCATION_CHECK_INTERVAL = 30.0     # check backend location API every 30 seconds
+# ---------- DEVICE LOCATION ----------
+def fetch_device_location() -> str:
+    """Fetch the device's physical address.
+    Priority: 1) Dashboard browser GPS (accurate)  2) IP geolocation (approximate)  3) .env fallback
+    """
+    global LOCATION
+
+    # --- Priority 1: Browser GPS via dashboard API (most accurate) ---
+    try:
+        resp = requests.get("http://127.0.0.1:8000/api/location", timeout=1)
+        if resp.status_code == 200:
+            data = resp.json()
+            addr = data.get("address", "")
+            if addr and addr != "Unknown Location":
+                LOCATION = addr
+                print(f"📍 [LOCATION] Using browser GPS: {LOCATION}")
+                return LOCATION
+    except Exception:
+        pass  # Dashboard may not be running
+
+    # --- Priority 2: IP-based geolocation (city-level, approximate) ---
+    try:
+        resp = requests.get("http://ip-api.com/json/?fields=status,city,regionName,country,lat,lon", timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("status") == "success":
+                city = data.get("city", "")
+                region = data.get("regionName", "")
+                country = data.get("country", "")
+                lat = data.get("lat", "")
+                lon = data.get("lon", "")
+                address = f"{city}, {region}, {country} (Lat: {lat}, Lon: {lon})"
+                LOCATION = address
+                print(f"📍 [LOCATION] Using IP geolocation (approximate): {LOCATION}")
+                print(f"⚠️  IP location may be inaccurate. For precise location, open the dashboard and allow GPS access.")
+                return LOCATION
+    except Exception as e:
+        print(f"⚠️ [LOCATION] IP geolocation failed: {e}")
+
+    # --- Priority 3: .env fallback ---
+    print(f"📍 [LOCATION] Using fallback from .env: {LOCATION}")
+    return LOCATION
+
 
 # ---------------- LOAD MODEL ----------------
 model = YOLO(MODEL_PATH)
@@ -52,6 +92,9 @@ if not cap.isOpened():
     exit()
 
 print("Webcam started. Press 'q' to quit.")
+
+# Fetch location on startup
+fetch_device_location()
 
 
 #---------------Complaint Format Function---------------
@@ -134,22 +177,6 @@ def save_complaint_to_supabase(payload_dict: dict, evidence_url: str):
 
 # ---------------- MAIN LOOP ----------------
 while True:
-    current_time = time.time()
-    # Periodically fetch active location from the dashboard API
-    if current_time - last_location_check >= LOCATION_CHECK_INTERVAL:
-        last_location_check = current_time
-        try:
-            response = requests.get("http://127.0.0.1:8000/api/location", timeout=0.8)
-            if response.status_code == 200:
-                data = response.json()
-                if data and "address" in data:
-                    new_loc = data["address"]
-                    if new_loc != LOCATION:
-                        LOCATION = new_loc
-                        print(f"[LOCATION UPDATE] Camera location updated dynamically to: {LOCATION}")
-        except Exception:
-            pass
-
     ret, frame = cap.read()
     if not ret:
         print("Error: Could not read frame")
@@ -247,6 +274,9 @@ while True:
 
         elapsed_time = current_time - first_detected_time
         print(f"[{timestamp}] 📸 Evidence captured (uploading to cloud...)")
+
+        # Refresh device location right before filing complaint
+        fetch_device_location()
 
         complaint_text, payload = garbage_complaint_format(  
             location=LOCATION,
