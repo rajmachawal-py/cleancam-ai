@@ -41,6 +41,12 @@
                         </a>
                     </div>
 
+                    <!-- Location Display & Update -->
+                    <button id="location-btn" class="location-btn" title="Click to share location with Camera Engine">
+                        <span class="location-icon">📍</span>
+                        <span id="location-text-display">Loading Location...</span>
+                    </button>
+
                     <!-- Dark Mode Toggle -->
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle dark/light mode">
                         <svg id="theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
@@ -109,10 +115,11 @@
                     <div class="stat-label">Active Monitoring</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="auto-refresh-indicator">
-                        <span class="live-dot"></span> Live
+                    <div class="stat-value" id="connection-status">
+                        <span class="live-dot" id="connection-dot"></span>
+                        <span id="connection-text">Connecting</span>
                     </div>
-                    <div class="stat-label">Auto-Refresh (30s)</div>
+                    <div class="stat-label">Live Stream</div>
                 </div>
             </div>
         </div>
@@ -226,7 +233,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="empty-state">
+                <div class="empty-state" id="empty-state">
                     <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M9 11l3 3L22 4"></path>
                         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
@@ -237,6 +244,9 @@
             {% endif %}
         </div>
     </section>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <!-- Footer -->
     <footer class="footer">
@@ -264,29 +274,19 @@
 
     <script>
         // =================== COMPLAINT DATA ===================
-        const complaints = JSON.parse(document.getElementById('complaints-data').textContent);
-        
+        let complaints = JSON.parse(document.getElementById('complaints-data').textContent);
+        let detectionChart = null;
+
         // =================== CHART.JS ===================
         function initChart() {
             const ctx = document.getElementById('detectionChart');
-            if (!ctx || complaints.length === 0) return;
+            if (!ctx) return;
 
-            // Group by date and get average garbage_pct per day
-            const grouped = {};
-            complaints.forEach(c => {
-                const dateStr = c.timestamp ? c.timestamp.split('T')[0] : 'Unknown';
-                if (!grouped[dateStr]) grouped[dateStr] = [];
-                grouped[dateStr].push(c.garbage_pct || 0);
-            });
+            const { labels, avgData, countData } = computeChartData(complaints);
 
-            const labels = Object.keys(grouped).sort();
-            const avgData = labels.map(d => {
-                const vals = grouped[d];
-                return +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-            });
-            const countData = labels.map(d => grouped[d].length);
+            if (labels.length === 0) return;
 
-            new Chart(ctx, {
+            detectionChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -348,6 +348,51 @@
             });
         }
 
+        function computeChartData(data) {
+            const grouped = {};
+            data.forEach(c => {
+                const dateStr = c.timestamp ? c.timestamp.split('T')[0] : 'Unknown';
+                if (!grouped[dateStr]) grouped[dateStr] = [];
+                grouped[dateStr].push(c.garbage_pct || 0);
+            });
+
+            const labels = Object.keys(grouped).sort();
+            const avgData = labels.map(d => {
+                const vals = grouped[d];
+                return +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+            });
+            const countData = labels.map(d => grouped[d].length);
+
+            return { labels, avgData, countData };
+        }
+
+        function updateChartWithNewComplaint(complaint) {
+            if (!detectionChart) return;
+
+            const dateStr = complaint.timestamp ? complaint.timestamp.split('T')[0] : new Date().toISOString().split('T')[0];
+            const labels = detectionChart.data.labels;
+            const avgDataset = detectionChart.data.datasets[0];
+            const countDataset = detectionChart.data.datasets[1];
+
+            const idx = labels.indexOf(dateStr);
+            if (idx >= 0) {
+                // Update existing date — recalculate average
+                const oldCount = countDataset.data[idx];
+                const oldAvg = avgDataset.data[idx];
+                const newCount = oldCount + 1;
+                const newAvg = +((oldAvg * oldCount + (complaint.garbage_pct || 0)) / newCount).toFixed(1);
+                avgDataset.data[idx] = newAvg;
+                countDataset.data[idx] = newCount;
+            } else {
+                // New date — add new data point
+                labels.push(dateStr);
+                avgDataset.data.push(+(complaint.garbage_pct || 0).toFixed(1));
+                countDataset.data.push(1);
+            }
+
+            detectionChart.update('none');
+        }
+
         // =================== SEVERITY FILTERS ===================
         function initFilters() {
             const filterBar = document.getElementById('filter-bar');
@@ -385,14 +430,6 @@
             function applyTheme(theme) {
                 document.body.setAttribute('data-theme', theme);
                 localStorage.setItem('cleancam-theme', theme);
-                if (theme === 'light') {
-                    sunIcon.style.display = 'none';
-                    moonIcon.style.display = 'block';
-                } else {
-                    sunIcon.style.display = 'none';
-                    moonIcon.style.display = 'block';
-                }
-                // Show correct icon: sun in dark mode (click to go light), moon in light mode (click to go dark)
                 if (theme === 'dark') {
                     sunIcon.style.display = 'block';
                     moonIcon.style.display = 'none';
@@ -410,28 +447,349 @@
             });
         }
 
-        // =================== AUTO REFRESH ===================
-        function initAutoRefresh() {
-            const REFRESH_INTERVAL = 30000; // 30 seconds
+        // =================== SSE CONNECTION ===================
+        function setConnectionStatus(status) {
+            const dot = document.getElementById('connection-dot');
+            const text = document.getElementById('connection-text');
+            if (!dot || !text) return;
 
-            setInterval(async () => {
+            dot.className = 'live-dot';
+            switch (status) {
+                case 'connected':
+                    dot.classList.add('status-connected');
+                    text.textContent = 'Connected';
+                    break;
+                case 'reconnecting':
+                    dot.classList.add('status-reconnecting');
+                    text.textContent = 'Reconnecting…';
+                    break;
+                case 'disconnected':
+                    dot.classList.add('status-disconnected');
+                    text.textContent = 'Disconnected';
+                    break;
+            }
+        }
+
+        function initSSE() {
+            const evtSource = new EventSource('/stream');
+
+            evtSource.onopen = () => {
+                console.log('SSE connected');
+                setConnectionStatus('connected');
+            };
+
+            evtSource.addEventListener('new_complaint', (event) => {
                 try {
-                    const res = await fetch('/complaints/latest');
-                    const latest = await res.json();
-                    if (latest && latest.id) {
-                        // Check if we have a new complaint
-                        const currentTotal = document.querySelectorAll('.card[data-severity]').length;
-                        const totalRes = await fetch('/complaints');
-                        const allComplaints = await totalRes.json();
-                        if (allComplaints.length > currentTotal) {
-                            // New detection — reload the page
-                            location.reload();
-                        }
-                    }
+                    const complaint = JSON.parse(event.data);
+                    console.log('SSE new_complaint:', complaint);
+
+                    // 1. Add to local data array
+                    complaints.unshift(complaint);
+
+                    // 2. Inject card into grid
+                    injectNewCard(complaint);
+
+                    // 3. Update stats
+                    updateStats(complaint);
+
+                    // 4. Update chart
+                    updateChartWithNewComplaint(complaint);
+
+                    // 5. Show toast
+                    showToast(complaint);
                 } catch (err) {
-                    console.log('Auto-refresh check failed:', err);
+                    console.error('SSE parse error:', err);
                 }
-            }, REFRESH_INTERVAL);
+            });
+
+            evtSource.onerror = () => {
+                console.warn('SSE connection lost, reconnecting...');
+                setConnectionStatus('reconnecting');
+            };
+        }
+
+        // =================== DYNAMIC CARD INJECTION ===================
+        function buildCardHTML(c) {
+            const sev = c.severity || 'Low';
+            let badgeHTML = '';
+            if (sev === 'Critical') badgeHTML = '<span class="badge badge-critical">Critical</span>';
+            else if (sev === 'High') badgeHTML = '<span class="badge badge-high">High Priority</span>';
+            else if (sev === 'Medium') badgeHTML = '<span class="badge badge-medium">Medium</span>';
+            else badgeHTML = '<span class="badge badge-low">Low</span>';
+
+            const ts = c.timestamp || 'N/A';
+            const evidenceURL = c.evidence_url || '';
+            const location = c.location || 'N/A';
+            const garbagePct = c.garbage_pct != null ? c.garbage_pct : 0;
+            const duration = c.duration_seconds != null ? c.duration_seconds : 'N/A';
+
+            let imageHTML = '';
+            if (evidenceURL) {
+                imageHTML = `
+                    <img src="${evidenceURL}" alt="Garbage Evidence" loading="lazy">
+                    <div class="image-overlay">
+                        <span class="view-text">Click to view</span>
+                    </div>`;
+            } else {
+                imageHTML = `
+                    <div class="no-image">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <p>No image available</p>
+                    </div>`;
+            }
+
+            return `
+                <article class="card card-new" data-severity="${sev}">
+                    <div class="card-header">
+                        <div class="severity-badge">${badgeHTML}</div>
+                        <span class="timestamp">${ts}</span>
+                    </div>
+                    <div class="card-image">${imageHTML}</div>
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="icon">📍</span>
+                                <div class="info-content">
+                                    <span class="info-label">Location</span>
+                                    <span class="info-value">${location}</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <span class="icon">♻️</span>
+                                <div class="info-content">
+                                    <span class="info-label">Garbage Detected</span>
+                                    <span class="info-value">${garbagePct}%</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <span class="icon">⏱️</span>
+                                <div class="info-content">
+                                    <span class="info-label">Duration</span>
+                                    <span class="info-value">${duration}s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>`;
+        }
+
+        function injectNewCard(complaint) {
+            // Remove empty state if present
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) {
+                const parent = emptyState.parentElement;
+                emptyState.remove();
+                // Create grid container
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+                grid.id = 'reports-grid';
+                parent.appendChild(grid);
+            }
+
+            const grid = document.getElementById('reports-grid');
+            if (!grid) return;
+
+            // Check current filter
+            const activeFilter = document.querySelector('.filter-btn.active');
+            const currentFilter = activeFilter ? activeFilter.dataset.filter : 'all';
+
+            const temp = document.createElement('div');
+            temp.innerHTML = buildCardHTML(complaint);
+            const newCard = temp.firstElementChild;
+
+            // If a filter is active and doesn't match, hide it
+            if (currentFilter !== 'all' && complaint.severity !== currentFilter) {
+                newCard.style.display = 'none';
+            }
+
+            // Prepend (newest first)
+            grid.insertBefore(newCard, grid.firstChild);
+
+            // Remove the card-new class after animation completes
+            setTimeout(() => {
+                newCard.classList.remove('card-new');
+            }, 2000);
+        }
+
+        // =================== LIVE STATS UPDATE ===================
+        function updateStats(complaint) {
+            // Update total count
+            const totalEl = document.getElementById('stat-total');
+            if (totalEl) {
+                const oldTotal = parseInt(totalEl.textContent) || 0;
+                const newTotal = oldTotal + 1;
+                totalEl.textContent = newTotal;
+                totalEl.style.animation = 'none';
+                totalEl.offsetHeight; // trigger reflow
+                totalEl.style.animation = 'countUp 0.6s ease-out';
+            }
+
+            // Update average garbage %
+            const avgEl = document.getElementById('stat-avg');
+            if (avgEl) {
+                const oldTotal = complaints.length - 1; // -1 because we already pushed
+                const oldAvgText = avgEl.textContent.replace('%', '').trim();
+                const oldAvg = parseFloat(oldAvgText) || 0;
+                const newPct = complaint.garbage_pct || 0;
+                const newCount = oldTotal + 1;
+                const newAvg = oldTotal > 0 ? ((oldAvg * oldTotal + newPct) / newCount).toFixed(1) : newPct.toFixed(1);
+                avgEl.textContent = newAvg + '%';
+                avgEl.style.animation = 'none';
+                avgEl.offsetHeight;
+                avgEl.style.animation = 'countUp 0.6s ease-out';
+            }
+        }
+
+        // =================== TOAST NOTIFICATIONS ===================
+        function showToast(complaint) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const sev = complaint.severity || 'Low';
+            const pct = complaint.garbage_pct != null ? complaint.garbage_pct : 0;
+            const loc = complaint.location || 'Unknown';
+
+            const severityEmoji = {
+                'Critical': '🔴',
+                'High': '🟠',
+                'Medium': '🟡',
+                'Low': '🟢'
+            };
+
+            const title = complaint.title || `New ${sev} Detection`;
+            const msg = complaint.message || `${pct}% garbage at ${loc}`;
+
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${sev.toLowerCase()}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${severityEmoji[sev] || '🚨'}</div>
+                <div class="toast-body">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${msg}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger slide-in animation
+            requestAnimationFrame(() => {
+                toast.classList.add('toast-visible');
+            });
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('toast-visible');
+                toast.classList.add('toast-hiding');
+                setTimeout(() => toast.remove(), 400);
+            }, 5000);
+        }
+
+        // =================== GEOLOCATION ===================
+        async function fetchServerLocation() {
+            try {
+                const response = await fetch('/api/location');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.address) {
+                        document.getElementById('location-text-display').textContent = data.address;
+                        document.getElementById('location-btn').title = `Active Location: ${data.address}`;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch server location:', err);
+            }
+        }
+
+        function requestBrowserLocation() {
+            const display = document.getElementById('location-text-display');
+            if (!navigator.geolocation) {
+                console.warn('Geolocation not supported by this browser');
+                return;
+            }
+
+            display.textContent = 'Requesting GPS…';
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    display.textContent = 'Geocoding…';
+
+                    let address = `Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}`;
+
+                    try {
+                        const reverseGeoUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+                        const geoResponse = await fetch(reverseGeoUrl, {
+                            headers: { 'User-Agent': 'CleanCamAI/3.0' }
+                        });
+                        if (geoResponse.ok) {
+                            const geoData = await geoResponse.json();
+                            if (geoData && geoData.display_name) {
+                                address = geoData.display_name;
+                            }
+                        }
+                    } catch (geoErr) {
+                        console.error('Reverse geocoding error:', geoErr);
+                    }
+
+                    // Send to server
+                    try {
+                        const response = await fetch('/api/location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                address: address,
+                                latitude: lat,
+                                longitude: lon
+                            })
+                        });
+
+                        if (response.ok) {
+                            display.textContent = address;
+                            document.getElementById('location-btn').title = `Active Location: ${address}`;
+                            console.log('Server location updated to:', address);
+                            
+                            // Trigger a local visual config success toast
+                            showToast({
+                                severity: 'Low',
+                                title: '📍 Location Configured',
+                                message: 'Active camera coordinates updated successfully'
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Failed to update location on server:', err);
+                        display.textContent = 'Sync Error';
+                    }
+                },
+                (error) => {
+                    console.warn('Geolocation denied or failed:', error);
+                    // Reset to server version
+                    fetchServerLocation();
+                }
+            );
+        }
+
+        function initLocation() {
+            const btn = document.getElementById('location-btn');
+            if (!btn) return;
+
+            // Fetch initial server location
+            fetchServerLocation().then(() => {
+                // If it is still the fallback default, auto-request browser location
+                const display = document.getElementById('location-text-display');
+                if (display && (display.textContent === 'Unknown Location' || display.textContent === 'Loading Location...')) {
+                    requestBrowserLocation();
+                }
+            });
+
+            btn.addEventListener('click', () => {
+                requestBrowserLocation();
+            });
         }
 
         // =================== INIT ===================
@@ -439,7 +797,8 @@
             initChart();
             initFilters();
             initThemeToggle();
-            initAutoRefresh();
+            initSSE();
+            initLocation();
         });
     </script>
 </body>

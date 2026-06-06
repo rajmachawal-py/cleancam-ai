@@ -7,7 +7,9 @@ import os
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-load_dotenv()
+# Load .env from project root (two levels up from src/supabase_client.py)
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(_PROJECT_ROOT, ".env"))
 
 SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")

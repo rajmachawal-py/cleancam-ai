@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 import cv2
+# pyrefly: ignore [missing-import]
 from ultralytics import YOLO
 import time
 import requests
@@ -34,8 +36,13 @@ first_detected_time = None         # stores first detection time
 complaint_triggered = False        # prevents repeated triggers
 threshold_buffer = 5.0             # buffer to avoid rapid toggling
 
+# ---------- LOCATION SYNC CONFIG ----------
+last_location_check = 0.0
+LOCATION_CHECK_INTERVAL = 30.0     # check backend location API every 30 seconds
+
 # ---------------- LOAD MODEL ----------------
 model = YOLO(MODEL_PATH)
+
 
 # ---------------- OPEN WEBCAM ----------------
 cap = cv2.VideoCapture(0)
@@ -127,6 +134,22 @@ def save_complaint_to_supabase(payload_dict: dict, evidence_url: str):
 
 # ---------------- MAIN LOOP ----------------
 while True:
+    current_time = time.time()
+    # Periodically fetch active location from the dashboard API
+    if current_time - last_location_check >= LOCATION_CHECK_INTERVAL:
+        last_location_check = current_time
+        try:
+            response = requests.get("http://127.0.0.1:8000/api/location", timeout=0.8)
+            if response.status_code == 200:
+                data = response.json()
+                if data and "address" in data:
+                    new_loc = data["address"]
+                    if new_loc != LOCATION:
+                        LOCATION = new_loc
+                        print(f"[LOCATION UPDATE] Camera location updated dynamically to: {LOCATION}")
+        except Exception:
+            pass
+
     ret, frame = cap.read()
     if not ret:
         print("Error: Could not read frame")
@@ -240,6 +263,22 @@ while True:
         # -------- SUPABASE: Upload evidence + save complaint --------
         evidence_url = upload_evidence_to_supabase(frame, filename)
         save_complaint_to_supabase(payload, evidence_url)
+
+        # -------- SSE: Notify dashboard for real-time update --------
+        try:
+            from dashboard_api.models.complaint import classify_severity
+            notify_data = {
+                "timestamp": timestamp,
+                "location": LOCATION,
+                "severity": classify_severity(garbage_percentage),
+                "garbage_pct": round(garbage_percentage, 2),
+                "duration_seconds": int(elapsed_time),
+                "evidence_url": evidence_url,
+            }
+            requests.post("http://127.0.0.1:8000/notify", json=notify_data, timeout=2)
+            print("📡 Dashboard notified via SSE.")
+        except Exception as e:
+            print(f"⚠️ Dashboard SSE notify skipped (dashboard may be offline): {e}")
 
         complaint_triggered = True
 
