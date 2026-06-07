@@ -37,3 +37,8 @@ Thumbs.db
 # Merge artifacts
 *.resolved
 walkthrough.md
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
