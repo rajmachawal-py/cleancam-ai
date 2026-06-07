@@ -293,24 +293,9 @@ pytest src/tests/ -v
 
 ## 👨‍💻 Author
 
-<table>
-<tr>
-<td align="center">
-  <a href="https://github.com/rajmachawal-py">
-    <img src="https://github.com/rajmachawal-py.png" width="100px;" alt="Lakshay Vig" style="border-radius:50%"/>
-    <br />
-    <b>Lakshay Vig</b>
-  </a>
-  <br />
-  <a href="https://github.com/rajmachawal-py" title="GitHub">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" />
-  </a>
-  <a href="https://linkedin.com/in/lakshay-vig/" title="LinkedIn">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" />
-  </a>
-</td>
-</tr>
-</table>
+| Name | GitHub | LinkedIn |
+|------|--------|----------|
+| **Lakshay Vig** | [![GitHub](https://img.shields.io/badge/rajmachawal--py-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rajmachawal-py) | [![LinkedIn](https://img.shields.io/badge/lakshay--vig-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/lakshay-vig/) |
 
 ---
 
