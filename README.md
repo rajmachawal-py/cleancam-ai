@@ -295,7 +295,7 @@ pytest src/tests/ -v
 
 | Name | GitHub | LinkedIn |
 |------|--------|----------|
-| **Lakshay Vig** | [![GitHub](https://img.shields.io/badge/rajmachawal--py-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rajmachawal-py) | [![LinkedIn](https://img.shields.io/badge/lakshay--vig-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/lakshay-vig/) |
+| <img src="https://github.com/rajmachawal-py.png" width="50" style="border-radius:50%"/> **Lakshay Vig** | [![GitHub](https://img.shields.io/badge/rajmachawal--py-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rajmachawal-py) | [![LinkedIn](https://img.shields.io/badge/lakshay--vig-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/lakshay-vig/) |
 
 ---
 
