@@ -10,6 +10,8 @@
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" />
   <img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white" />
+  <img src="https://img.shields.io/badge/Leaflet.js-199900?style=for-the-badge&logo=leaflet&logoColor=white" />
+  <img src="https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white" />
 </p>
 
 <p>
@@ -17,9 +19,10 @@
   <img src="https://img.shields.io/github/stars/rajmachawal-py/cleancam-ai?style=flat-square&color=yellow" />
   <img src="https://img.shields.io/github/forks/rajmachawal-py/cleancam-ai?style=flat-square&color=blue" />
   <img src="https://img.shields.io/github/last-commit/rajmachawal-py/cleancam-ai?style=flat-square&color=red" />
+  <img src="https://img.shields.io/badge/tests-35%20passing-brightgreen?style=flat-square" />
 </p>
 
-> *AI-powered garbage detection, severity scoring, and automated civic complaint workflow.*
+> *AI-powered garbage detection, severity scoring, and automated civic complaint workflow — with a real-time live dashboard, interactive map, and secure authentication.*
 
 </div>
 
@@ -53,8 +56,9 @@ graph LR
     D --> E[☁️ Upload to Supabase Storage]
     E --> F[📧 n8n Webhook Alert]
     E --> G[📝 Supabase DB Insert]
-    G --> H[🖥️ Live Dashboard]
-    C -- No --> I[⏳ Keep Monitoring]
+    G --> H[📡 SSE Broadcast]
+    H --> I[🖥️ Live Dashboard + Map]
+    C -- No --> J[⏳ Keep Monitoring]
 ```
 
 ---
@@ -63,25 +67,57 @@ graph LR
 
 <table>
 <tr>
-<td align="center" width="25%">
+<td align="center" width="20%">
   <h3>🗑️</h3>
   <b>Garbage Detection</b><br/>
   YOLOv8s model trained on 4730+ images with GPU acceleration
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
   <h3>📊</h3>
   <b>Severity Classification</b><br/>
   Auto-categorized: Low · Medium · High · Critical
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
+  <h3>📡</h3>
+  <b>Real-Time SSE</b><br/>
+  Live dashboard updates via Server-Sent Events — no page refresh needed
+</td>
+<td align="center" width="20%">
+  <h3>🗺️</h3>
+  <b>Interactive Map</b><br/>
+  Leaflet.js detection map with severity-colored markers and GPS tracking
+</td>
+<td align="center" width="20%">
+  <h3>🔒</h3>
+  <b>Secure Auth</b><br/>
+  Supabase GoTrue login with HttpOnly session cookies
+</td>
+</tr>
+<tr>
+<td align="center" width="20%">
   <h3>☁️</h3>
   <b>Cloud Evidence</b><br/>
   In-memory JPEG upload directly to Supabase Storage
 </td>
-<td align="center" width="25%">
+<td align="center" width="20%">
   <h3>📧</h3>
   <b>Auto Complaints</b><br/>
   Webhook alerts + email via n8n automation
+</td>
+<td align="center" width="20%">
+  <h3>📱</h3>
+  <b>PWA Ready</b><br/>
+  Installable Progressive Web App with service worker caching
+</td>
+<td align="center" width="20%">
+  <h3>🧪</h3>
+  <b>Fully Tested</b><br/>
+  35 automated unit & integration tests with pytest
+</td>
+<td align="center" width="20%">
+  <h3>🌗</h3>
+  <b>Dark/Light Mode</b><br/>
+  Theme toggle with adaptive map tiles and UI styling
 </td>
 </tr>
 </table>
@@ -116,18 +152,23 @@ Trained on **RTX 4050 GPU** · **YOLOv8s** · **50 epochs** · **4730 images**
 <td align="center"><img src="https://skillicons.dev/icons?i=fastapi" width="40"/><br/><b>FastAPI</b></td>
 <td align="center"><img src="https://skillicons.dev/icons?i=supabase" width="40"/><br/><b>Supabase</b></td>
 <td align="center"><img src="https://skillicons.dev/icons?i=postgres" width="40"/><br/><b>PostgreSQL</b></td>
-<td align="center"><img src="https://skillicons.dev/icons?i=docker" width="40"/><br/><b>Docker</b></td>
 <td align="center"><img src="https://skillicons.dev/icons?i=pytorch" width="40"/><br/><b>PyTorch</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=html" width="40"/><br/><b>Jinja2</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=css" width="40"/><br/><b>CSS</b></td>
+<td align="center"><img src="https://skillicons.dev/icons?i=js" width="40"/><br/><b>Chart.js</b></td>
 </tr>
 </table>
 
 | Layer | Technologies |
 |-------|-------------|
-| **Detection** | YOLOv8s · OpenCV · PyTorch (CUDA) |
-| **Backend** | FastAPI · Uvicorn · Pydantic |
+| **Detection** | YOLOv8s · OpenCV · PyTorch (CUDA 12.8) |
+| **Backend** | FastAPI · Uvicorn · Pydantic · SSE |
 | **Database** | Supabase (PostgreSQL + Storage) |
+| **Auth** | Supabase GoTrue · Session Cookies |
 | **Automation** | n8n · Webhooks · Gmail |
-| **Frontend** | Jinja2 · Chart.js · Dark Mode UI |
+| **Frontend** | Jinja2 · Chart.js · Leaflet.js · Dark/Light Mode |
+| **Testing** | pytest · pytest-asyncio · httpx |
+| **PWA** | Service Worker · Web App Manifest |
 
 ---
 
@@ -136,24 +177,29 @@ Trained on **RTX 4050 GPU** · **YOLOv8s** · **50 epochs** · **4730 images**
 ```
 CleanCam AI/
 ├── src/
-│   ├── detect_severity.py      # Main detection engine
-│   ├── retrain.py              # GPU training script (YOLOv8s)
-│   ├── supabase_client.py      # Shared Supabase connection
+│   ├── detect_severity.py          # Main detection engine (webcam → YOLO → Supabase)
+│   ├── retrain.py                  # GPU training script (YOLOv8s, RTX 4050)
+│   ├── supabase_client.py          # Shared Supabase connection
+│   ├── tests/                      # Automated test suite
+│   │   ├── test_severity.py        # 15 unit tests (severity scoring + models)
+│   │   └── test_api.py             # 20 integration tests (routes + auth)
 │   └── dashboard_api/
-│       ├── main.py             # FastAPI app
+│       ├── main.py                 # FastAPI v4.0 (Auth + SSE + CORS)
 │       ├── models/
-│       │   └── complaint.py    # Pydantic data models
+│       │   └── complaint.py        # Pydantic data models
 │       ├── services/
 │       │   └── supabase_services.py
 │       ├── templates/
-│       │   └── dashboard.html  # Dashboard UI
-│       └── static/css/
-│           └── dashboard.css   # Dark theme styles
-├── Garbage_dataset/            # Roboflow training data
+│       │   ├── dashboard.html      # Dashboard UI (Chart.js + Leaflet + SSE)
+│       │   └── login.html          # Glassmorphism login portal
+│       └── static/
+│           ├── manifest.json       # PWA manifest
+│           ├── sw.js               # Service worker
+│           ├── css/dashboard.css   # Dark theme + map styles
+│           └── icons/              # PWA brand icons
 ├── model/
-│   └── train_v2/weights/
-│       └── best.pt             # Trained YOLOv8s weights
-├── .env                        # Configuration
+│   └── train_v2/weights/best.pt    # Trained YOLOv8s weights
+├── .env                            # Configuration
 ├── requirements.txt
 └── README.md
 ```
@@ -189,6 +235,7 @@ LOCATION = "Your Camera Location"
 ```bash
 cd src
 python detect_severity.py
+# Press 'q' to quit, 'c' to force-trigger a complaint
 ```
 
 ### 4️⃣ Run Dashboard
@@ -198,7 +245,13 @@ cd src/dashboard_api
 uvicorn main:app --reload
 ```
 
-Open **http://127.0.0.1:8000/dashboard** 🖥️
+Open **http://127.0.0.1:8000/** → Login with your Supabase credentials 🔒
+
+### 5️⃣ Run Tests
+
+```bash
+pytest src/tests/ -v
+```
 
 ---
 
@@ -221,14 +274,43 @@ Open **http://127.0.0.1:8000/dashboard** 🖥️
 - [x] YOLOv8 garbage detection
 - [x] Severity classification engine
 - [x] n8n webhook automation
-- [x] Supabase cloud migration
+- [x] Supabase cloud migration (PostgreSQL + Storage)
 - [x] Model retrain (YOLOv8s, 50 epochs, GPU)
-- [x] Cloud-only evidence upload
+- [x] Cloud-only evidence upload (in-memory)
 - [x] Dashboard with Chart.js analytics
-- [ ] Live real-time dashboard (WebSocket)
-- [ ] PWA + Push notifications
+- [x] Dynamic browser GPS location config
+- [x] SSE real-time live dashboard updates
+- [x] Interactive Leaflet.js detection map
+- [x] PWA support (installable, offline caching)
+- [x] Supabase Auth (secure login/logout)
+- [x] Automated test suite (35 tests)
+- [x] Dark/Light mode with adaptive map tiles
 - [ ] Multi-camera support
 - [ ] Negative sample training (reduce false positives)
+- [ ] Deployment to cloud
+
+---
+
+## 👨‍💻 Author
+
+<table>
+<tr>
+<td align="center">
+  <a href="https://github.com/rajmachawal-py">
+    <img src="https://github.com/rajmachawal-py.png" width="100px;" alt="Lakshay Vig" style="border-radius:50%"/>
+    <br />
+    <b>Lakshay Vig</b>
+  </a>
+  <br />
+  <a href="https://github.com/rajmachawal-py" title="GitHub">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" />
+  </a>
+  <a href="https://linkedin.com/in/lakshay-vig/" title="LinkedIn">
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" />
+  </a>
+</td>
+</tr>
+</table>
 
 ---
 
