@@ -1,0 +1,1 @@
+# CleanCam AI test package

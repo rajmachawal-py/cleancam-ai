@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CleanCam AI Dashboard</title>
     <meta name="description" content="AI-Powered Garbage Detection & Monitoring Dashboard — Real-time waste detection analytics">
+    <meta name="theme-color" content="#22C55E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
@@ -64,6 +70,11 @@
                             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                         </svg>
                     </button>
+
+                    <!-- Logout -->
+                    <a href="/auth/logout" class="logout-btn" title="Sign out">
+                        🔒 Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -800,6 +811,14 @@
             initSSE();
             initLocation();
         });
+    </script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js', { scope: '/' })
+                .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
+                .catch(err => console.warn('[PWA] SW registration failed:', err));
+        }
     </script>
 </body>
 </html>
