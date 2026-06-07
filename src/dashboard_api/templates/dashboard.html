@@ -12,7 +12,9 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
     <!-- Hero Section -->
@@ -143,6 +145,27 @@
             <p class="section-subtitle">Garbage percentage over time</p>
             <div class="chart-container">
                 <canvas id="detectionChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <div class="container-full">
+            <h2 class="section-title">📍 Detection Map</h2>
+            <p class="section-subtitle">Active camera location and complaint hotspots</p>
+            <div class="map-container" id="map-container">
+                <div id="detection-map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot legend-camera"></span>
+                        <span>Camera Location</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot legend-complaint"></span>
+                        <span>Complaints</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -448,6 +471,8 @@
                     sunIcon.style.display = 'none';
                     moonIcon.style.display = 'block';
                 }
+                // Switch map tile layer to match theme
+                switchMapTiles(theme);
             }
 
             applyTheme(savedTheme);
@@ -506,7 +531,13 @@
                     // 4. Update chart
                     updateChartWithNewComplaint(complaint);
 
-                    // 5. Show toast
+                    // 5. Add map marker for new complaint
+                    if (cameraMarker) {
+                        const latlng = cameraMarker.getLatLng();
+                        addNewMapMarker(complaint, latlng.lat, latlng.lng);
+                    }
+
+                    // 6. Show toast
                     showToast(complaint);
                 } catch (err) {
                     console.error('SSE parse error:', err);
@@ -803,6 +834,153 @@
             });
         }
 
+        // =================== MAP ===================
+        let detectionMap = null;
+        let cameraMarker = null;
+        let complaintMarkers = [];
+        let currentTileLayer = null;
+
+        const TILE_URLS = {
+            dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+        };
+
+        function switchMapTiles(theme) {
+            if (!detectionMap) return;
+            if (currentTileLayer) detectionMap.removeLayer(currentTileLayer);
+            currentTileLayer = L.tileLayer(TILE_URLS[theme] || TILE_URLS.dark, {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(detectionMap);
+        }
+
+        function initMap() {
+            const mapEl = document.getElementById('detection-map');
+            if (!mapEl) return;
+
+            // Default coordinates (center of India as fallback)
+            let defaultLat = 20.5937;
+            let defaultLng = 78.9629;
+            let defaultZoom = 5;
+
+            detectionMap = L.map('detection-map', {
+                scrollWheelZoom: true,
+                zoomControl: true,
+            }).setView([defaultLat, defaultLng], defaultZoom);
+
+            // Set tile layer based on current theme
+            const currentTheme = localStorage.getItem('cleancam-theme') || 'dark';
+            switchMapTiles(currentTheme);
+
+            // Fetch camera location and place marker
+            fetch('/api/location')
+                .then(r => r.json())
+                .then(loc => {
+                    if (loc && loc.latitude && loc.longitude) {
+                        const lat = loc.latitude;
+                        const lng = loc.longitude;
+
+                        detectionMap.setView([lat, lng], 15);
+
+                        // Camera marker (green pulsing)
+                        const cameraIcon = L.divIcon({
+                            className: 'map-marker-camera',
+                            html: '<div class="marker-pulse"></div><div class="marker-core">📷</div>',
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 20],
+                        });
+                        cameraMarker = L.marker([lat, lng], { icon: cameraIcon })
+                            .addTo(detectionMap)
+                            .bindPopup(`<b>Active Camera</b><br>${loc.address || 'Unknown'}`);
+
+                        // Add complaint markers clustered around camera position
+                        addComplaintMarkers(lat, lng);
+                    }
+                })
+                .catch(err => console.warn('Map: Could not fetch camera location', err));
+
+            // Fix tile rendering on hidden/resized containers
+            setTimeout(() => detectionMap.invalidateSize(), 300);
+        }
+
+        function addComplaintMarkers(baseLat, baseLng) {
+            if (!detectionMap || !complaints.length) return;
+
+            const severityColors = {
+                'Critical': '#DC2626',
+                'High': '#EF4444',
+                'Medium': '#F59E0B',
+                'Low': '#22C55E'
+            };
+
+            complaints.forEach((c, i) => {
+                // Slight random offset so markers don't stack perfectly
+                const offsetLat = (Math.random() - 0.5) * 0.003;
+                const offsetLng = (Math.random() - 0.5) * 0.003;
+                const lat = baseLat + offsetLat;
+                const lng = baseLng + offsetLng;
+                const sev = c.severity || 'Low';
+                const color = severityColors[sev] || '#22C55E';
+
+                const icon = L.divIcon({
+                    className: 'map-marker-complaint',
+                    html: `<div class="marker-dot" style="background:${color};box-shadow:0 0 8px ${color}80"></div>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7],
+                });
+
+                const ts = c.timestamp ? new Date(c.timestamp).toLocaleString() : 'N/A';
+                const marker = L.marker([lat, lng], { icon: icon })
+                    .addTo(detectionMap)
+                    .bindPopup(`
+                        <b>${sev} Detection</b><br>
+                        📍 ${c.location || 'N/A'}<br>
+                        ♻️ ${c.garbage_pct || 0}%<br>
+                        🕒 ${ts}
+                    `);
+                complaintMarkers.push(marker);
+            });
+        }
+
+        function addNewMapMarker(complaint, baseLat, baseLng) {
+            if (!detectionMap) return;
+
+            const severityColors = {
+                'Critical': '#DC2626',
+                'High': '#EF4444',
+                'Medium': '#F59E0B',
+                'Low': '#22C55E'
+            };
+
+            const sev = complaint.severity || 'Low';
+            const color = severityColors[sev] || '#22C55E';
+            const offsetLat = (Math.random() - 0.5) * 0.003;
+            const offsetLng = (Math.random() - 0.5) * 0.003;
+
+            const icon = L.divIcon({
+                className: 'map-marker-complaint',
+                html: `<div class="marker-dot" style="background:${color};box-shadow:0 0 8px ${color}80"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+            });
+
+            const ts = complaint.timestamp ? new Date(complaint.timestamp).toLocaleString() : 'N/A';
+            const marker = L.marker([baseLat + offsetLat, baseLng + offsetLng], { icon: icon })
+                .addTo(detectionMap)
+                .bindPopup(`
+                    <b>${sev} Detection</b><br>
+                    📍 ${complaint.location || 'N/A'}<br>
+                    ♻️ ${complaint.garbage_pct || 0}%<br>
+                    🕒 ${ts}
+                `);
+            complaintMarkers.push(marker);
+
+            // Flash the marker
+            marker.openPopup();
+            setTimeout(() => marker.closePopup(), 3000);
+        }
+
         // =================== INIT ===================
         document.addEventListener('DOMContentLoaded', () => {
             initChart();
@@ -810,6 +988,7 @@
             initThemeToggle();
             initSSE();
             initLocation();
+            initMap();
         });
     </script>
     <!-- PWA Service Worker Registration -->

@@ -40,17 +40,29 @@ CleanCam AI/
 │   ├── supabase_client.py          # Shared Supabase client (used by detect + dashboard)
 │   ├── main.ipynb                  # Original training notebook (legacy, gitignored)
 │   │
+│   ├── tests/                      # Automated unit/integration tests (pytest)
+│   │   ├── __init__.py
+│   │   ├── test_api.py             # 20 integration tests for FastAPI backend
+│   │   └── test_severity.py        # 15 unit tests for severity calculation
+│   │
 │   └── dashboard_api/
-│       ├── main.py                 # FastAPI app (routes: /dashboard, /complaints, /evidence)
+│       ├── main.py                 # FastAPI app (routes: /dashboard, /complaints, /auth/login)
 │       ├── models/
 │       │   └── complaint.py        # Pydantic models: ComplaintPayload, ComplaintRecord
 │       ├── services/
 │       │   ├── supabase_services.py  # DB queries (get_all, get_latest, get_by_severity)
 │       │   └── sheets_services.py    # LEGACY Google Sheets (no longer used)
 │       ├── templates/
-│       │   └── dashboard.html      # Dashboard UI (Chart.js, dark mode, severity filters)
-│       └── static/css/
-│           └── dashboard.css       # Dark theme with scanlines, pulse indicators
+│       │   ├── dashboard.html      # Dashboard UI w/ Manifest + Service Worker integration
+│       │   └── login.html          # Secure login portal (glassmorphism UI)
+│       └── static/
+│           ├── css/
+│           │   └── dashboard.css   # Dark theme w/ scanlines + auth/login styles
+│           ├── manifest.json       # PWA manifest configurations
+│           ├── sw.js               # Service worker caching static/dynamic routes
+│           └── icons/              # PWA brand logo assets
+│               ├── icon-192.png
+│               └── icon-512.png
 ```
 
 ---
@@ -140,7 +152,10 @@ SUPABASE_KEY        = "eyJ..."      # Supabase anon key
 10. **Pydantic Models** — `ComplaintPayload` and `ComplaintRecord` for type-safe data handling
 11. **Confidence Threshold Tuning** — Raised from 0.3 → 0.75 to reduce false positives
 12. **README Redesign** — Animated header, badges, mermaid diagrams, skill icons
-13. **Gitignore Cleanup** — Covers dataset, models, .env, notebooks, merge artifacts
+13. **Gitignore Cleanup** — Covers dataset, models, .env, notebooks, merge artifacts, and pytest cache/coverage
+14. **Automated Testing** — 35 unit & integration tests passing (`pytest` + `pytest-asyncio` + `httpx`) covering severity scoring, validation, and route auth
+15. **Progressive Web App (PWA)** — Manifest integration, service worker (`sw.js`) cache, install support, and brand icons
+16. **Secure Supabase Auth** — Cookie-based session tracking (`access_token`, HttpOnly, 24h), user verification, and protected/public route segregation
 
 ---
 
@@ -149,7 +164,6 @@ SUPABASE_KEY        = "eyJ..."      # Supabase anon key
 1. **False Positives** — Model detects people/indoor scenes as garbage (confidence 0.60-0.76). Root cause: training dataset has no negative examples (people, rooms, clean streets). Fix: retrain with negative samples.
 2. **n8n Webhook** — Returns 404 when n8n server is offline (expected behavior, not a bug)
 3. **Single Camera** — Currently supports only one webcam feed
-4. **No Auth** — Dashboard is publicly accessible, no login required
 
 ---
 
@@ -160,10 +174,8 @@ SUPABASE_KEY        = "eyJ..."      # Supabase anon key
 - Live camera feed thumbnail
 - Real-time garbage percentage gauge
 
-### Priority 2: PWA + Push Notifications
-- Turn dashboard into installable Progressive Web App
-- Push alerts when garbage is detected
-- Service worker for offline support
+### Priority 2: PWA Push Notifications
+- Push alerts when garbage is detected on PWA-installed devices
 
 ### Priority 3: Evidence Gallery
 - Dedicated page showing all uploaded evidence images in a grid
@@ -175,15 +187,11 @@ SUPABASE_KEY        = "eyJ..."      # Supabase anon key
 - Peak detection hours heatmap
 - Auto-generated PDF reports
 
-### Priority 5: Authentication & Multi-User
-- Supabase Auth for login
-- Role-based access (admin vs viewer)
-
-### Priority 6: Multi-Camera Support
+### Priority 5: Multi-Camera Support
 - Handle multiple RTSP/webcam feeds
 - Each camera reports with its own location tag
 
-### Priority 7: Reduce False Positives
+### Priority 6: Reduce False Positives
 - Add negative training samples (people, empty rooms, clean streets)
 - Retrain model with balanced dataset
 
